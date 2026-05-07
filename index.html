@@ -416,7 +416,7 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
         <div><div>Importeer data</div><div class="sett-sub">Herstel vanuit een backup</div></div>
         <span class="sett-arr">›</span>
       </div>
-      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+      <input type="file" id="import-file" accept=".json" style="display:none">
     </div>
     <div class="mb16">
       <div class="sett-lbl mb8">App</div>
@@ -667,6 +667,32 @@ function startApp() {
   });
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+  // Import file listener (module scripts need addEventListener, not inline onchange)
+  document.getElementById('import-file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    toast('Bestand laden...');
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const d = JSON.parse(ev.target.result);
+        const naam = d.name || d.naam || 'onbekend';
+        const data = d.coll || d.collection || {};
+        const n = Object.keys(data).length;
+        if (n === 0) { toast('Geen sticker-data gevonden in bestand'); return; }
+        if (confirm('Data van "' + naam + '" importeren?\n' + n + ' stickers gevonden.\nDit overschrijft jouw huidige collectie!')) {
+          coll = data;
+          renderCollection();
+          updateStats();
+          scheduleSave();
+          toast(n + ' stickers geimporteerd! ✅');
+        }
+      } catch(err) { toast('Ongeldig bestand: controleer het JSON bestand'); }
+    };
+    reader.readAsText(file);
+    this.value = '';
+  });
 }
 
 async function loadAllUsers() {
@@ -992,22 +1018,7 @@ window.exportData = function() {
   toast('Geëxporteerd ✓');
 };
 
-window.importData = function(e) {
-  const file=e.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    try{
-      const d=JSON.parse(ev.target.result);
-      if(confirm(`Data van "${d.name||'?'}" importeren? Dit overschrijft jouw huidige collectie!`)){
-        coll=d.coll||{};
-        renderCollection(); updateStats(); scheduleSave();
-        toast('Geïmporteerd ✓');
-      }
-    }catch{ toast('❌ Ongeldig bestand'); }
-  };
-  reader.readAsText(file);
-  e.target.value='';
-};
+// importData handled by event listener in startApp
 
 window.resetAll = function() {
   if(!confirm('Weet je zeker dat je je volledige collectie wilt wissen?\nDit is ONOMKEERBAAR.')) return;
