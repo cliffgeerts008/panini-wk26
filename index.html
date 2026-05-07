@@ -154,6 +154,11 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
 .sc-icon{position:absolute;top:3px;right:4px;font-size:12px;line-height:1}
 .sc-badge{position:absolute;top:3px;left:4px;background:var(--gold);color:#000;border-radius:50%;
   width:15px;height:15px;font-size:8px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.dbl-btn{position:absolute;bottom:3px;right:3px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);
+  border-radius:5px;width:20px;height:20px;font-size:11px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s;color:var(--gold);z-index:2}
+.dbl-btn:hover,.dbl-btn:active{background:rgba(245,158,11,.35)}
+.sc.dbl .dbl-btn{background:rgba(245,158,11,.3);border-color:var(--gold)}
 
 /* ── OVERVIEW ── */
 .ov-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
@@ -342,7 +347,7 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
       <div class="leg-item"><div class="leg-dot h"></div>Heb ik</div>
       <div class="leg-item"><div class="leg-dot d"></div>Dubbel</div>
       <div class="leg-item"><div class="leg-dot n"></div>Nog nodig</div>
-      <div class="leg-tip">Tik = heb ik &nbsp;|&nbsp; Lang tikken = dubbel</div>
+      <div class="leg-tip">Tik = heb ik &nbsp;|&nbsp; ⭐ = dubbel</div>
     </div>
     <div class="filter-bar">
       <button class="fbtn active" id="fb-all"    onclick="setFilter('all'   )">Alles</button>
@@ -648,6 +653,15 @@ function startApp() {
   // Click + long-press on sticker grid
   const grid = document.getElementById('collectie-list');
   grid.addEventListener('click', e => {
+    // ⭐ button → toggle double
+    const dblBtn = e.target.closest('.dbl-btn');
+    if (dblBtn) {
+      e.stopPropagation();
+      const id = dblBtn.dataset.dbl;
+      const cur = coll[id] || 0;
+      setStatus(id, cur === 2 ? 1 : 2); // toggle between have and double
+      return;
+    }
     const card = e.target.closest('.sc');
     if (!card || pressTimer !== null) return;
     quickToggle(card.dataset.id);
@@ -780,10 +794,12 @@ function renderCollection() {
       const cls = st===2 ? 'dbl' : st===1 ? 'have' : '';
       const icon = st===2 ? '<span class="sc-icon">⭐</span>' : st===1 ? '<span class="sc-icon">✓</span>' : '';
       const badge = st===2 ? '<span class="sc-badge">2x</span>' : '';
+      const dblBtn = `<span class="dbl-btn" data-dbl="${s.id}" title="Dubbel markeren">⭐</span>`;
       html += `<div class="sc${cls?' '+cls:''}" data-id="${s.id}">
         ${badge}${icon}
         <div class="sc-num">${s.id}</div>
         <div class="sc-name">${s.name}</div>
+        ${dblBtn}
       </div>`;
     }
     html += `</div></div>`;
@@ -841,7 +857,7 @@ function updateCardDOM(id) {
   }
   const icon = st===2?'<span class="sc-icon">⭐</span>':st===1?'<span class="sc-icon">✓</span>':'';
   const badge = st===2?'<span class="sc-badge">2x</span>':'';
-  card.innerHTML = `${badge}${icon}<div class="sc-num">${id}</div><div class="sc-name">${name}</div>`;
+  card.innerHTML = `${badge}${icon}<div class="sc-num">${id}</div><div class="sc-name">${name}</div><span class="dbl-btn" data-dbl="${id}" title="Dubbel markeren">⭐</span>`;
 }
 
 function updateSectionHeader(id) {
