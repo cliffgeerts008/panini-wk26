@@ -578,14 +578,16 @@ function makeAvatar(name, size=40) {
 
 // ── BOOT ──
 async function boot() {
-  // Load sticker data script first (it's already in the page via <script src="data.js">)
-  // Check if user already known
   const saved = localStorage.getItem('panini_user');
   if (saved) {
     const d = JSON.parse(saved);
     userId = d.id; userName = d.name;
-    document.getElementById('loading-msg').textContent = `Welkom terug, ${userName}!`;
-    await loadUser();
+    // Laad lokale data METEEN — wacht niet op Firebase
+    coll = JSON.parse(localStorage.getItem('panini_coll_' + userId) || '{}');
+    document.getElementById('loading').style.display = 'none';
+    startApp();
+    // Firebase sync op achtergrond
+    syncFromFirebase();
   } else {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('welcome').style.display = 'flex';
@@ -596,6 +598,52 @@ async function boot() {
       if (e.key === 'Enter') createUser();
     });
   }
+}
+
+// Sync op achtergrond — blokkeert nooit de app
+async function syncFromFirebase() {
+  try {
+    const ref = doc(db, 'users', userId);
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000));
+    const snap = await Promise.race([getDoc(ref), timeout]);
+    if (snap.exists()) {
+      const remote = snap.data().coll || {};
+      // Merge: remote wint alleen als er meer data is
+      const localKeys = Object.keys(coll).length;
+      const remoteKeys = Object.keys(remote).length;
+      if (remoteKeys > localKeys) {
+        coll = remote;
+        localStorage.setItem('panini_coll_' + userId, JSON.stringify(coll));
+        renderCollection();
+        updateStats();
+        showSync('ok', 'Gesynchroniseerd ✓');
+        setTimeout(() => hideSyncIndicator(), 2000);
+      }
+    } else {
+      // Nieuwe gebruiker — sla op in Firebase
+      await setDoc(ref, { name: userName, coll, createdAt: Date.now() });
+    }
+    // Start realtime listener
+    startRealtimeListener();
+  } catch(e) {
+    console.warn('Firebase sync mislukt:', e.message);
+    showSync('err', 'Offline — lokaal opgeslagen');
+    setTimeout(() => hideSyncIndicator(), 3000);
+  }
+}
+
+function startRealtimeListener() {
+  if (unsubscribe) unsubscribe();
+  const myRef = doc(db, 'users', userId);
+  unsubscribe = onSnapshot(myRef, snap => {
+    if (snap.exists()) {
+      const remote = snap.data().coll || {};
+      coll = { ...remote };
+      localStorage.setItem('panini_coll_' + userId, JSON.stringify(coll));
+      renderCollection();
+      updateStats();
+    }
+  }, () => {});
 }
 
 window.createUser = async function() {
@@ -632,32 +680,12 @@ window.createUser = async function() {
   startApp();
 };
 
+// loadUser vervangen door syncFromFirebase hierboven
 async function loadUser() {
-  // Timeout: na 5 seconden offline starten
-  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
-  try {
-    const ref = doc(db, 'users', userId);
-    const snap = await Promise.race([getDoc(ref), timeout]);
-    if (snap.exists()) {
-      coll = snap.data().coll || {};
-    } else {
-      coll = {};
-      await Promise.race([setDoc(ref, { name: userName, coll: {}, createdAt: Date.now() }), timeout]);
-    }
-    document.getElementById('loading').style.display = 'none';
-    startApp();
-  } catch(e) {
-    console.warn('Firebase fout:', e.message);
-    // Altijd lokale data laden als fallback
-    document.getElementById('loading-msg').textContent = e.message === 'timeout'
-      ? '⚠️ Database traag — lokale data geladen'
-      : '⚠️ Geen toegang tot database — controleer Firebase rules';
-    coll = JSON.parse(localStorage.getItem('panini_coll_' + userId) || '{}');
-    setTimeout(() => {
-      document.getElementById('loading').style.display = 'none';
-      startApp();
-    }, 2000);
-  }
+  coll = JSON.parse(localStorage.getItem('panini_coll_' + userId) || '{}');
+  document.getElementById('loading').style.display = 'none';
+  startApp();
+  syncFromFirebase();
 }
 
 function startApp() {
@@ -684,19 +712,7 @@ function startApp() {
   renderCollection();
   updateStats();
 
-  // Real-time listener on own doc
-  const myRef = doc(db, 'users', userId);
-  if (unsubscribe) unsubscribe();
-  unsubscribe = onSnapshot(myRef, snap => {
-    if (snap.exists()) {
-      const remote = snap.data().coll || {};
-      // Merge: remote wins for keys not locally modified (simple last-write wins)
-      coll = { ...remote };
-      localStorage.setItem('panini_coll_' + userId, JSON.stringify(coll));
-      renderCollection();
-      updateStats();
-    }
-  }, () => {}); // ignore offline errors
+  // Realtime listener wordt gestart door syncFromFirebase()
 
   // Load all users for friends page
   loadAllUsers();
