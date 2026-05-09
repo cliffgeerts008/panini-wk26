@@ -610,15 +610,21 @@ window.createUser = async function() {
 
   // Check if user already exists in Firestore
   const ref = doc(db, 'users', id);
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
-    coll = snap.data().coll || {};
-    toast(`Welkom terug, ${name}! 👋`);
-  } else {
-    // New user
+  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
+  try {
+    const snap = await Promise.race([getDoc(ref), timeout]);
+    if (snap.exists()) {
+      coll = snap.data().coll || {};
+      toast(`Welkom terug, ${name}! 👋`);
+    } else {
+      coll = {};
+      await Promise.race([setDoc(ref, { name, coll: {}, createdAt: Date.now() }), timeout]);
+      toast(`Welkom, ${name}! Veel plezier 🎉`);
+    }
+  } catch(e) {
+    console.warn('Firebase fout bij aanmaken:', e.message);
     coll = {};
-    await setDoc(ref, { name, coll: {}, createdAt: Date.now() });
-    toast(`Welkom, ${name}! Veel plezier 🎉`);
+    toast('⚠️ Offline gestart — data wordt lokaal opgeslagen');
   }
 
   localStorage.setItem('panini_user', JSON.stringify({ id, name }));
@@ -627,26 +633,30 @@ window.createUser = async function() {
 };
 
 async function loadUser() {
+  // Timeout: na 5 seconden offline starten
+  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
   try {
     const ref = doc(db, 'users', userId);
-    const snap = await getDoc(ref);
+    const snap = await Promise.race([getDoc(ref), timeout]);
     if (snap.exists()) {
       coll = snap.data().coll || {};
     } else {
-      // User doesn't exist yet, create
       coll = {};
-      await setDoc(ref, { name: userName, coll: {}, createdAt: Date.now() });
+      await Promise.race([setDoc(ref, { name: userName, coll: {}, createdAt: Date.now() }), timeout]);
     }
     document.getElementById('loading').style.display = 'none';
     startApp();
   } catch(e) {
-    // Offline fallback
-    document.getElementById('loading-msg').textContent = 'Offline — lokale data geladen';
+    console.warn('Firebase fout:', e.message);
+    // Altijd lokale data laden als fallback
+    document.getElementById('loading-msg').textContent = e.message === 'timeout'
+      ? '⚠️ Database traag — lokale data geladen'
+      : '⚠️ Geen toegang tot database — controleer Firebase rules';
     coll = JSON.parse(localStorage.getItem('panini_coll_' + userId) || '{}');
     setTimeout(() => {
       document.getElementById('loading').style.display = 'none';
       startApp();
-    }, 1200);
+    }, 2000);
   }
 }
 
