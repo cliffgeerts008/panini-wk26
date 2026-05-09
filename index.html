@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/Cliff/Downloads/index_5.html -->
+<!-- saved from url=(0045)file:///C:/Users/Cliff/Downloads/index_6.html -->
 <html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -315,15 +315,15 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
 </div>
 
 <!-- HEADER -->
-<div id="header" style="display: block;">
+<div id="header" style="display:none">
   <div class="hdr-row1">
     <div class="logo-wrap">
       <span class="logo-ball">⚽</span>
       <div class="logo-text"><div class="t1">Panini WK 2026</div><div class="t2">Sticker Tracker</div></div>
     </div>
     <div class="user-pill" onclick="goPage(&#39;instellingen&#39;)">
-      <div class="user-avatar" id="hdr-avatar" style="background: linear-gradient(135deg, rgb(59, 130, 246), rgb(29, 78, 216));">CL</div>
-      <span class="user-name" id="hdr-name">Cliff &amp; Vincent</span>
+      <div class="user-avatar" id="hdr-avatar">?</div>
+      <span class="user-name" id="hdr-name">...</span>
     </div>
     <div id="search-wrap">
       <svg class="search-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
@@ -341,7 +341,7 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
   </div>
 </div>
 
-<main id="main-content" style="display: block;">
+<main id="main-content" style="display:none">
 
   <!-- ═══ COLLECTIE ═══ -->
   <div id="p-collectie" class="page active">
@@ -407,8 +407,8 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
     <div class="mb16">
       <div class="sett-lbl mb8">Jouw profiel</div>
       <div class="sett-item">
-        <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, rgb(59, 130, 246), rgb(29, 78, 216)); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: rgb(255, 255, 255);" id="sett-avatar">CL</div>
-        <div><div id="sett-name-display">Cliff &amp; Vincent</div><div class="sett-sub" id="sett-stats-display">0 stickers verzameld</div></div>
+        <div class="user-avatar" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff" id="sett-avatar">?</div>
+        <div><div id="sett-name-display">Laden...</div><div class="sett-sub" id="sett-stats-display">0 stickers verzameld</div></div>
       </div>
     </div>
     <div class="mb16">
@@ -478,7 +478,7 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
 </main>
 
 <!-- BOTTOM NAV -->
-<nav id="nav" style="display: flex;">
+<nav id="nav" style="display:none">
   <button class="nb active" id="nb-collectie" onclick="goPage(&#39;collectie&#39;)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>Collectie
   </button>
@@ -609,9 +609,9 @@ async function boot() {
     try {
       startApp();
     } catch(e) {
-      console.error('startApp fout:', e);
+      console.error('startApp fout:', e, e.stack);
       document.getElementById('loading').style.display = 'none';
-      alert('App fout: ' + e.message);
+      alert('App fout: ' + (e.message || e.toString()) + '\n\n' + (e.stack||'').split('\n').slice(0,3).join('\n'));
     }
     // Firebase sync op achtergrond
     syncFromFirebase().catch(e => console.warn('sync fout:', e));
@@ -717,6 +717,11 @@ async function loadUser() {
 }
 
 function startApp() {
+  // Controleer of STICKER_DATA beschikbaar is
+  if (typeof STICKER_DATA === 'undefined') {
+    throw new Error('STICKER_DATA niet geladen - data.js ontbreekt of laadt niet');
+  }
+
   document.getElementById('header').style.display = 'block';
   document.getElementById('main-content').style.display = 'block';
   document.getElementById('nav').style.display = 'flex';
