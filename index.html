@@ -424,6 +424,24 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
       <input type="file" id="import-file" accept=".json" style="display:none">
     </div>
     <div class="mb16">
+      <div class="sett-lbl mb8">Exporteer naar Excel</div>
+      <div class="sett-item" onclick="exportExcel('need')">
+        <span style="font-size:20px">❌</span>
+        <div><div>Stickers die ik nog nodig heb</div><div class="sett-sub">Exporteer lijst als .csv (Excel)</div></div>
+        <span class="sett-arr">›</span>
+      </div>
+      <div class="sett-item" onclick="exportExcel('double')">
+        <span style="font-size:20px">⭐</span>
+        <div><div>Mijn dubbele stickers</div><div class="sett-sub">Exporteer lijst als .csv (Excel)</div></div>
+        <span class="sett-arr">›</span>
+      </div>
+      <div class="sett-item" onclick="exportExcel('all')">
+        <span style="font-size:20px">📊</span>
+        <div><div>Mijn volledige collectie</div><div class="sett-sub">Alle stickers met status als .csv</div></div>
+        <span class="sett-arr">›</span>
+      </div>
+    </div>
+    <div class="mb16">
       <div class="sett-lbl mb8">App</div>
       <div class="sett-item" id="install-sett" style="display:none" onclick="installApp()">
         <span style="font-size:20px">📲</span>
@@ -441,6 +459,11 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
       <div class="sett-item danger" onclick="switchUser()">
         <span style="font-size:20px">🔄</span>
         <div><div>Van gebruiker wisselen</div><div class="sett-sub">Andere naam / persoon</div></div>
+        <span class="sett-arr">›</span>
+      </div>
+      <div class="sett-item" onclick="restoreHidden()">
+        <span style="font-size:20px">👁️</span>
+        <div><div>Verborgen deelnemers herstellen</div><div class="sett-sub">Toon opnieuw alle verborgen vrienden</div></div>
         <span class="sett-arr">›</span>
       </div>
       <div class="sett-item danger" onclick="resetAll()">
@@ -936,7 +959,7 @@ window.friendTab = function(tab) {
 
 function renderFriends() {
   const el = document.getElementById('all-users-list');
-  const others = Object.entries(allUsers).filter(([id])=>id!==userId);
+  const others = Object.entries(allUsers).filter(([id])=>id!==userId && !hiddenFriends.includes(id));
   if(!others.length){
     el.innerHTML=`<div class="empty"><div class="ico">👥</div><p>Nog geen andere deelnemers.<br>Stuur de link naar vrienden!</p></div>`;
     return;
@@ -959,6 +982,17 @@ function renderFriends() {
   }
   el.innerHTML=html;
 }
+
+// Hidden friends list (stored locally)
+let hiddenFriends = JSON.parse(localStorage.getItem('panini_hidden')||'[]');
+
+window.hideFriend = function(id, name) {
+  if(!confirm(`${name} verbergen uit jouw vriendenlijst?\nHun account blijft bestaan.`)) return;
+  hiddenFriends.push(id);
+  localStorage.setItem('panini_hidden', JSON.stringify(hiddenFriends));
+  renderFriends();
+  toast(`${name} verborgen`);
+};
 
 window.showTrades = function(friendId, friendName) {
   friendTab('trades');
@@ -1032,6 +1066,47 @@ window.exportData = function() {
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`panini-wk2026-${userName.toLowerCase()}.json`; a.click();
   toast('Geëxporteerd ✓');
+};
+
+window.restoreHidden = function() {
+  if(!hiddenFriends.length){ toast('Geen verborgen deelnemers'); return; }
+  hiddenFriends = [];
+  localStorage.setItem('panini_hidden', '[]');
+  renderFriends();
+  toast('Alle deelnemers hersteld ✓');
+};
+
+// ── EXCEL EXPORT ──
+window.exportExcel = function(type) {
+  // Collect sticker info
+  const rows = [];
+  for(const [code, group] of Object.entries(STICKER_DATA.groups)) {
+    for(const s of group.stickers) {
+      const st = coll[s.id] || 0;
+      if(type === 'need'   && st !== 0) continue;
+      if(type === 'double' && st !== 2) continue;
+      rows.push({ Nummer: s.id, Naam: s.name, Land: group.name, Status: st===2?'Dubbel':st===1?'Heb ik':'Nodig' });
+    }
+  }
+
+  if(!rows.length){ toast('Geen stickers in deze categorie'); return; }
+
+  // Build CSV (opens in Excel)
+  const headers = ['Nummer','Naam','Land','Status'];
+  const csv = [
+    headers.join(';'),
+    ...rows.map(r => headers.map(h => `"${(r[h]||'').toString().replace(/"/g,'""')}"`).join(';'))
+  ].join('\n');
+
+  // BOM for Excel UTF-8
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const labels = { need:'te-kort', double:'dubbels', all:'alle' };
+  a.download = `panini-wk2026-${labels[type]||type}-${userName.toLowerCase()}.csv`;
+  a.click();
+  toast(`${rows.length} stickers geëxporteerd naar Excel ✓`);
 };
 
 // importData handled by event listener in startApp
