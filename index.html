@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/Cliff/Downloads/index_1.html -->
+<!-- saved from url=(0045)file:///C:/Users/Cliff/Downloads/index_2.html -->
 <html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -287,7 +287,7 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
 <div class="ball-bg b2"></div>
 
 <!-- LOADING -->
-<div id="loading">
+<div id="loading" style="display: none;">
   <div class="ball">⚽</div>
   <h1>Panini WK 2026</h1>
   <p id="loading-msg">Opstarten...</p>
@@ -295,13 +295,13 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
 </div>
 
 <!-- WELCOME -->
-<div id="welcome">
+<div id="welcome" style="display: none;">
   <span class="wball">⚽</span>
   <h1>Panini WK 2026</h1>
   <div class="sub">Sticker Tracker · Jouw collectie, altijd bij</div>
   <div id="welcome-form">
     <input type="text" id="welcome-name" placeholder="Wat is jouw naam?" maxlength="20" autocomplete="off" autocorrect="off">
-    <button id="welcome-btn" onclick="createUser()" disabled="">Aan de slag →</button>
+    <button id="welcome-btn" onclick="createUser()" disabled="">Bezig...</button>
     <div id="welcome-tip" class="small">
       💡 Geen account nodig. Jouw voortgang wordt automatisch opgeslagen en is beschikbaar op al je toestellen via dezelfde naam.
     </div>
@@ -315,15 +315,15 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
 </div>
 
 <!-- HEADER -->
-<div id="header" style="display:none">
+<div id="header" style="display: block;">
   <div class="hdr-row1">
     <div class="logo-wrap">
       <span class="logo-ball">⚽</span>
       <div class="logo-text"><div class="t1">Panini WK 2026</div><div class="t2">Sticker Tracker</div></div>
     </div>
     <div class="user-pill" onclick="goPage(&#39;instellingen&#39;)">
-      <div class="user-avatar" id="hdr-avatar">?</div>
-      <span class="user-name" id="hdr-name">...</span>
+      <div class="user-avatar" id="hdr-avatar" style="background: linear-gradient(135deg, rgb(59, 130, 246), rgb(29, 78, 216));">CL</div>
+      <span class="user-name" id="hdr-name">Cliff &amp; Vincent</span>
     </div>
     <div id="search-wrap">
       <svg class="search-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
@@ -341,10 +341,10 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
   </div>
 </div>
 
-<main id="main-content" style="display:none">
+<main id="main-content" style="display: block;">
 
   <!-- ═══ COLLECTIE ═══ -->
-  <div id="p-collectie" class="page active">
+  <div id="p-collectie" class="page">
     <div class="legend">
       <div class="leg-item"><div class="leg-dot h"></div>Heb ik</div>
       <div class="leg-item"><div class="leg-dot d"></div>Dubbel</div>
@@ -361,7 +361,7 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
   </div>
 
   <!-- ═══ OVERZICHT ═══ -->
-  <div id="p-overzicht" class="page">
+  <div id="p-overzicht" class="page active">
     <div class="ov-grid">
       <div class="ov-card"><div class="ov-big g" id="ov-have">0</div><div class="ov-lbl">🟢 Heb ik</div></div>
       <div class="ov-card"><div class="ov-big go" id="ov-dbl">0</div><div class="ov-lbl">⭐ Dubbel</div></div>
@@ -407,8 +407,8 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
     <div class="mb16">
       <div class="sett-lbl mb8">Jouw profiel</div>
       <div class="sett-item">
-        <div class="user-avatar" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff" id="sett-avatar">?</div>
-        <div><div id="sett-name-display">Laden...</div><div class="sett-sub" id="sett-stats-display">0 stickers verzameld</div></div>
+        <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, rgb(59, 130, 246), rgb(29, 78, 216)); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: rgb(255, 255, 255);" id="sett-avatar">CL</div>
+        <div><div id="sett-name-display">Cliff &amp; Vincent</div><div class="sett-sub" id="sett-stats-display">0 stickers verzameld</div></div>
       </div>
     </div>
     <div class="mb16">
@@ -478,11 +478,11 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
 </main>
 
 <!-- BOTTOM NAV -->
-<nav id="nav" style="display:none">
-  <button class="nb active" id="nb-collectie" onclick="goPage(&#39;collectie&#39;)">
+<nav id="nav" style="display: flex;">
+  <button class="nb" id="nb-collectie" onclick="goPage(&#39;collectie&#39;)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>Collectie
   </button>
-  <button class="nb" id="nb-overzicht" onclick="goPage(&#39;overzicht&#39;)">
+  <button class="nb active" id="nb-overzicht" onclick="goPage(&#39;overzicht&#39;)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>Overzicht
   </button>
   <button class="nb" id="nb-vrienden" onclick="goPage(&#39;vrienden&#39;)">
@@ -510,7 +510,7 @@ main{max-width:820px;margin:0 auto;padding:10px 10px 110px;position:relative;z-i
   </div>
 </div>
 
-<div id="toast"></div>
+<div id="toast" class="">Welkom terug, Cliff &amp; Vincent! 👋</div>
 <div id="install-banner" onclick="installApp()">📲 Installeer als app!</div>
 
 <!-- FIREBASE -->
@@ -596,20 +596,30 @@ async function boot() {
     const d = JSON.parse(saved);
     userId = d.id; userName = d.name;
     // Laad lokale data METEEN — wacht niet op Firebase
-    coll = JSON.parse(localStorage.getItem('panini_coll_' + userId) || '{}');
+    try {
+      coll = JSON.parse(localStorage.getItem('panini_coll_' + userId) || '{}');
+    } catch(e) { coll = {}; }
     document.getElementById('loading').style.display = 'none';
-    startApp();
+    try {
+      startApp();
+    } catch(e) {
+      console.error('startApp fout:', e);
+      document.getElementById('loading').style.display = 'none';
+      alert('App fout: ' + e.message);
+    }
     // Firebase sync op achtergrond
-    syncFromFirebase();
+    syncFromFirebase().catch(e => console.warn('sync fout:', e));
   } else {
     document.getElementById('loading').style.display = 'none';
-    document.getElementById('welcome').style.display = 'flex';
-    document.getElementById('welcome-name').addEventListener('input', e => {
-      document.getElementById('welcome-btn').disabled = e.target.value.trim().length < 2;
-    });
-    document.getElementById('welcome-name').addEventListener('keydown', e => {
-      if (e.key === 'Enter') createUser();
-    });
+    try {
+      document.getElementById('welcome').style.display = 'flex';
+      document.getElementById('welcome-name').addEventListener('input', e => {
+        document.getElementById('welcome-btn').disabled = e.target.value.trim().length < 2;
+      });
+      document.getElementById('welcome-name').addEventListener('keydown', e => {
+        if (e.key === 'Enter') createUser();
+      });
+    } catch(e) { console.error('welcome fout:', e); }
   }
 }
 
@@ -1106,7 +1116,7 @@ window.showTrades = function(friendId, friendName) {
     html+='<div class="chips">';
     give.slice(0,20).forEach(id=>{
       const extras=sExtras(id);
-      html+='<span class="chip give" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px" onclick="tradeOne(''+id+'')" title="Klik om 1 dubbel te ruilen">'+id+(extras>1?' <b style='font-size:10px'>×'+extras+'</b>':'')+'<span style="font-size:9px;opacity:.7">✓</span></span>';
+      html+='<span class="chip give" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px" onclick="tradeOne(\''+id+'\'  )" title="Klik om 1 dubbel te ruilen">'+id+(extras>1?' <b style="font-size:10px">×'+extras+'</b>':'')+'<span style="font-size:9px;opacity:.7">✓</span></span>';
     });
     if(give.length>20) html+='<span class="chip">+'+( give.length-20)+' meer</span>';
     html+='</div><div class="small" style="margin-bottom:8px">💡 Klik op een sticker om 1 exemplaar als geruild te markeren</div>';
@@ -1147,9 +1157,9 @@ window.openModal = function(id) {
       </div>
     </div>` : '';
   document.getElementById('m-btns').innerHTML=
-    '<button class="btn '+(st>=1?'btn-ghost':'btn-green')+'" onclick="setStatus(''+id+'',1)">✓ Heb ik</button>'
+    '<button class="btn '+(st>=1?'btn-ghost':'btn-green')+'" onclick="setStatus(\''+id+'\',1)">✓ Heb ik</button>'
     + dblSection
-    + (st>0?'<button class="btn btn-ghost" onclick="setStatus(''+id+'',0)">✗ Verwijderen</button>':'');
+    + (st>0?'<button class="btn btn-ghost" onclick="setStatus(\''+id+'\',0)">✗ Verwijderen</button>':'');
   document.getElementById('overlay').classList.add('open');
 };
 window.closeModal = function() { document.getElementById('overlay').classList.remove('open'); };
