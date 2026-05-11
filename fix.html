@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<!-- saved from url=(0041)file:///C:/Users/Cliff/Downloads/fix.html -->
+<html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panini Fix Tool</title>
+<style>
+  body { font-family: sans-serif; background: #0a0e1a; color: #eef2ff; padding: 30px; max-width: 600px; margin: 0 auto; }
+  h1 { color: #f59e0b; }
+  .log { background: #1a2038; border-radius: 10px; padding: 16px; margin-top: 20px; font-size: 13px; line-height: 1.8; font-family: monospace; min-height: 100px; }
+  .ok { color: #22c55e; }
+  .err { color: #ef4444; }
+  .info { color: #9aa5c0; }
+  button { background: #f59e0b; color: #000; border: none; border-radius: 8px; padding: 14px 28px; font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 20px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<h1>⚽ Panini Fix Tool</h1>
+<p>Dit corrigeert <strong>KAS12 → KSA12</strong> en <strong>SWI20 → SUI20</strong> voor alle gebruikers.</p>
+<p style="color:#ef4444;font-size:13px">⚠️ Alleen eenmalig uitvoeren als admin!</p>
+<button id="btn" onclick="runFix()">🔧 Fix uitvoeren</button>
+<div class="log" id="log"><span class="info">Klik op de knop om te starten...</span></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBIR1PQ5Q7Hk18dX7K20OW3WQtFMSViaSo",
+  authDomain: "panini-wk26.firebaseapp.com",
+  projectId: "panini-wk26",
+  storageBucket: "panini-wk26.firebasestorage.app",
+  messagingSenderId: "1072239827458",
+  appId: "1:1072239827458:web:263338f61504c12fdf251b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const FIXES = [
+  { from: 'KAS12', to: 'KSA12' },
+  { from: 'SWI20', to: 'SUI20' },
+];
+
+function log(msg, type='info') {
+  const el = document.getElementById('log');
+  el.innerHTML += `<div class="${type}">${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+window.runFix = async function() {
+  const btn = document.getElementById('btn');
+  btn.disabled = true;
+  document.getElementById('log').innerHTML = '';
+  log('Gebruikers ophalen uit Firebase...', 'info');
+
+  try {
+    const snap = await getDocs(collection(db, 'users'));
+    log(`${snap.size} gebruikers gevonden.`, 'info');
+
+    let totalFixed = 0;
+
+    for (const userDoc of snap.docs) {
+      const data = userDoc.data();
+      const coll = data.coll || {};
+      let changed = false;
+      const newColl = { ...coll };
+
+      for (const fix of FIXES) {
+        if (fix.from in newColl) {
+          newColl[fix.to] = newColl[fix.from]; // kopieer waarde
+          delete newColl[fix.from];             // verwijder oude sleutel
+          log(`✓ ${userDoc.id}: ${fix.from} → ${fix.to} (waarde: ${newColl[fix.to]})`, 'ok');
+          changed = true;
+          totalFixed++;
+        }
+      }
+
+      if (changed) {
+        await updateDoc(doc(db, 'users', userDoc.id), { coll: newColl });
+        log(`💾 ${userDoc.id} opgeslagen.`, 'ok');
+      } else {
+        log(`— ${userDoc.id}: geen aanpassingen nodig.`, 'info');
+      }
+    }
+
+    log('', 'info');
+    log(`✅ Klaar! ${totalFixed} correctie(s) uitgevoerd.`, 'ok');
+    log('Je kan deze pagina nu sluiten.', 'info');
+
+  } catch(e) {
+    log('❌ Fout: ' + e.message, 'err');
+    btn.disabled = false;
+  }
+};
+</script>
+
+
+</body></html>
