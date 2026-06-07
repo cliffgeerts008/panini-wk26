@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)file:///C:/Users/Cliff/Downloads/index_42.html -->
+<!-- saved from url=(0046)file:///C:/Users/Cliff/Downloads/index_43.html -->
 <html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -1632,21 +1632,33 @@ window.confirmTrade = async function(proposalId) {
     if(!snap.exists()) { toast('Voorstel niet meer gevonden'); return; }
     const p = snap.data();
 
-    // Maak ruilrecord voor beide partijen
-    const date = Date.now();
-    const myRecord     = { date, partnerId: p.fromId, partnerName: p.fromName, gave: p.got, got: p.gave };
-    const theirRecord  = { date, partnerId: p.toId,   partnerName: p.toName,   gave: p.gave, got: p.got };
+    // p.gave = wat voorsteller (fromId) gaf aan ontvanger (toId)
+    // p.got  = wat voorsteller (fromId) krijgt van ontvanger (toId)
+    // Ik ben de ontvanger (p.toId === userId)
 
-    // Sla geschiedenis op bij beide
-    await setDoc(doc(db, 'users', p.toId),   { history: arrayUnion(myRecord) },    { merge: true });
-    await setDoc(doc(db, 'users', p.fromId), { history: arrayUnion(theirRecord) }, { merge: true });
+    const date = Date.now();
+
+    // Geschiedenis: voorsteller gaf p.gave, kreeg p.got
+    const fromRecord = { date, partnerId: p.toId,   partnerName: p.toName,   gave: p.gave, got: p.got  };
+    // Geschiedenis: ontvanger gaf p.got, kreeg p.gave
+    const toRecord   = { date, partnerId: p.fromId, partnerName: p.fromName, gave: p.got,  got: p.gave };
+
+    await setDoc(doc(db, 'users', p.fromId), { history: arrayUnion(fromRecord) }, { merge: true });
+    await setDoc(doc(db, 'users', p.toId),   { history: arrayUnion(toRecord) },   { merge: true });
+
+    // Update collectie voorsteller (fromId): gaf p.gave → dubbels -1, kreeg p.got → heb ik
+    const fromSnap = await getDoc(doc(db, 'users', p.fromId));
+    const fromColl = fromSnap.exists() ? (fromSnap.data().coll||{}) : {};
+    for(const id of p.gave) { if((fromColl[id]||0)>=2) fromColl[id]--; else if(fromColl[id]===1) {} }
+    for(const id of p.got)  { if(!(fromColl[id])) fromColl[id]=1; }
+    await updateDoc(doc(db, 'users', p.fromId), { coll: fromColl });
+
+    // Update collectie ontvanger (toId = ik): gaf p.got → dubbels -1, kreeg p.gave → heb ik
+    for(const id of p.got)  { if((coll[id]||0)>=2) coll[id]--; }
+    for(const id of p.gave) { if(!coll[id]) coll[id]=1; }
 
     // Verwijder voorstel
     await deleteDoc(doc(db, 'pendingTrades', proposalId));
-
-    // Update mijn collectie (ik ben de ontvanger: p.toId)
-    for(const id of p.got)  { if(!coll[id]) coll[id] = 1; }   // ik kreeg dit
-    for(const id of p.gave) { if((coll[id]||0)>=2) coll[id]--; } // ik gaf dit (als ik ook voorsteller was)
 
     scheduleSave();
     renderCollection();
@@ -1693,14 +1705,12 @@ function loadPendingTrades() {
   unsubPending = onSnapshot(collection(db, 'pendingTrades'), snap => {
     pendingTrades = [];
     snap.forEach(d => pendingTrades.push(d.data()));
+    // Herlaad vriendenlijst zodat badges up-to-date zijn
+    renderFriends();
     renderPendingInTrades();
-    // Als we in het ruilscherm zitten van iemand die een voorstel heeft gestuurd, herlaad de view
+    // Herlaad ruilscherm als het open staat
     if(window._currentTradeId) {
-      const relevant = pendingTrades.filter(p =>
-        (p.fromId===userId && p.toId===window._currentTradeId) ||
-        (p.toId===userId && p.fromId===window._currentTradeId)
-      );
-      if(relevant.length > 0) showTrades(window._currentTradeId, window._currentTradeName);
+      showTrades(window._currentTradeId, window._currentTradeName);
     }
   }, () => {});
 }
