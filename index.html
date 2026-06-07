@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)file:///C:/Users/Cliff/Downloads/index_43.html -->
+<!-- saved from url=(0046)file:///C:/Users/Cliff/Downloads/index_44.html -->
 <html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -1664,9 +1664,9 @@ window.confirmTrade = async function(proposalId) {
     renderCollection();
     updateStats();
     toast('Ruil bevestigd! ✓');
+    // Herlaad allUsers zodat voorsteller ook up-to-date collectie ziet
     await loadAllUsers();
-    loadPendingTrades();
-    showTrades(p.fromId, p.fromName);
+    // pendingTrades listener werkt realtime — showTrades wordt automatisch herlaad
   } catch(e) {
     toast('Fout: ' + e.message);
   }
@@ -1863,10 +1863,10 @@ window.showTrades = function(friendId, friendName) {
 
       html += '<div class="pending-actions">';
       if(isIncoming) {
-        html += '<button class="btn btn-green btn-sm" onclick="confirmTrade('+q(p.id)+')">✓ Bevestigen</button>';
-        html += '<button class="btn btn-red btn-sm" onclick="rejectTrade('+q(p.id)+','+q(p.fromName)+')">✗ Weigeren</button>';
+        html += '<button class="btn btn-green btn-sm pending-confirm" data-pid="'+p.id+'">✓ Bevestigen</button>';
+        html += '<button class="btn btn-red btn-sm pending-reject" data-pid="'+p.id+'" data-fname="'+p.fromName.replace(/"/g,'&quot;')+'">✗ Weigeren</button>';
       } else {
-        html += '<button class="btn btn-ghost btn-sm" onclick="cancelProposal('+q(p.id)+')">✕ Annuleren</button>';
+        html += '<button class="btn btn-ghost btn-sm pending-cancel" data-pid="'+p.id+'">✕ Annuleren</button>';
       }
       html += '</div></div>';
     }
