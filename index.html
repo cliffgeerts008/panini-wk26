@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)file:///C:/Users/Cliff/Downloads/index_41.html -->
+<!-- saved from url=(0046)file:///C:/Users/Cliff/Downloads/index_42.html -->
 <html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -1548,8 +1548,16 @@ function renderFriends() {
     html += '<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,'+c1+','+c2+');display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0">'+initials(name)+'</div>';
     html += '<div style="flex:1"><div class="fname">'+name+'</div><div class="fsub">'+hv+' stickers · '+pct+'% compleet</div></div>';
     html += '<div style="display:flex;gap:6px;align-items:center">';
+    // Tel openstaande voorstellen voor deze persoon
+    const pendingCount = pendingTrades.filter(p =>
+      (p.fromId===userId && p.toId===id) ||
+      (p.toId===userId && p.fromId===id)
+    ).length;
+    const pendingBadge = pendingCount > 0
+      ? ' <span style="background:var(--red);color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle">'+pendingCount+'</span>'
+      : '';
     html += '<button class="btn btn-gold btn-sm" onclick="showTrades('+q(id)+','+q(name)+')">';
-    html += 'Ruilen</button>';
+    html += 'Ruilen'+pendingBadge+'</button>';
     html += '<button class="btn btn-ghost btn-sm" onclick="showHistory('+q(id)+','+q(name)+')">';
     html += 'Geschiedenis</button>';
     html += deleteBtn;
@@ -1677,13 +1685,24 @@ window.cancelProposal = async function(proposalId) {
 
 // ── LAAD OPENSTAANDE VOORSTELLEN ──
 let pendingTrades = [];
-async function loadPendingTrades() {
-  try {
-    const snap = await getDocs(collection(db, 'pendingTrades'));
+let unsubPending = null;
+
+function loadPendingTrades() {
+  // Realtime listener op pendingTrades
+  if(unsubPending) unsubPending();
+  unsubPending = onSnapshot(collection(db, 'pendingTrades'), snap => {
     pendingTrades = [];
     snap.forEach(d => pendingTrades.push(d.data()));
     renderPendingInTrades();
-  } catch(e) {}
+    // Als we in het ruilscherm zitten van iemand die een voorstel heeft gestuurd, herlaad de view
+    if(window._currentTradeId) {
+      const relevant = pendingTrades.filter(p =>
+        (p.fromId===userId && p.toId===window._currentTradeId) ||
+        (p.toId===userId && p.fromId===window._currentTradeId)
+      );
+      if(relevant.length > 0) showTrades(window._currentTradeId, window._currentTradeName);
+    }
+  }, () => {});
 }
 
 function renderPendingInTrades() {
