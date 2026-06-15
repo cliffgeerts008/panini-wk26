@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)file:///C:/Users/Cliff/Downloads/index_67.html -->
+<!-- saved from url=(0046)file:///C:/Users/Cliff/Downloads/index_68.html -->
 <html lang="nl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -2172,7 +2172,21 @@ window.goPage = function(name) {
 
 // ── EXPORT / IMPORT ──
 window.exportExcel = function(type) {
-  if(typeof XLSX === 'undefined') { toast('Excel bibliotheek laden...'); return; }
+  if(typeof XLSX === 'undefined') {
+    toast('Excel bibliotheek laden, even geduld...');
+    // Probeer opnieuw te laden en de export na 1 seconde te herstarten
+    const existing = document.querySelector('script[src*="xlsx.full.min.js"]');
+    if(!existing) {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      document.head.appendChild(s);
+    }
+    setTimeout(() => {
+      if(typeof XLSX !== 'undefined') exportExcel(type);
+      else toast('Kon Excel bibliotheek niet laden. Controleer je internetverbinding.');
+    }, 1500);
+    return;
+  }
 
   const groups = STICKER_DATA.groups;
 
